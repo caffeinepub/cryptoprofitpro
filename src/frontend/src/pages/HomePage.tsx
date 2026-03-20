@@ -1,7 +1,10 @@
+import FearGreedWidget from "@/components/FearGreedWidget";
 import SupportAdStrip from "@/components/SupportAdStrip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { useWatchlist } from "@/contexts/WatchlistContext";
 import type { CryptoPriceExtended } from "@/hooks/useQueries";
 import { useGetCryptoPrices } from "@/hooks/useQueries";
 import { Link } from "@tanstack/react-router";
@@ -13,6 +16,7 @@ import {
   Globe,
   Heart,
   ShieldCheck,
+  Star,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -54,14 +58,14 @@ const shortcutTiles = [
   },
   {
     icon: DollarSign,
-    label: "Tax Estimator",
-    path: "/calculator",
+    label: "Converter",
+    path: "/converter",
     color: "text-yellow-400",
   },
   {
     icon: TrendingUp,
-    label: "Top Gainers",
-    path: "/live",
+    label: "Portfolio",
+    path: "/portfolio",
     color: "text-success",
   },
   {
@@ -107,6 +111,8 @@ const skeletonRows = ["sk-1", "sk-2", "sk-3", "sk-4", "sk-5"];
 
 export default function HomePage() {
   const { data: prices, isLoading, isError } = useGetCryptoPrices();
+  const { formatPrice } = useCurrency();
+  const { toggleWatch, isWatched } = useWatchlist();
   const displayPrices = prices?.slice(0, 10);
 
   return (
@@ -202,6 +208,33 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Market Sentiment + Stats row */}
+      <section className="container mx-auto px-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <FearGreedWidget />
+          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-center">
+            <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">
+              Total Crypto Market Cap
+            </p>
+            <p className="text-2xl font-bold font-display text-foreground">
+              ~$2.4T
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Approximate global market cap
+            </p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-center">
+            <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">
+              BTC Dominance
+            </p>
+            <p className="text-2xl font-bold font-display text-primary">~54%</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Bitcoin's share of total market cap
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Live Markets table */}
       <section
         className="container mx-auto px-4 mb-12"
@@ -253,12 +286,14 @@ export default function HomePage() {
                     <th className="text-right px-6 py-3 hidden lg:table-cell">
                       Chart
                     </th>
+                    <th className="text-center px-3 py-3">★</th>
                   </tr>
                 </thead>
                 <tbody>
                   {displayPrices.map((coin, i) => {
                     const sym = coin.symbol.replace("USDT", "");
                     const isPos = coin.changePercent >= 0;
+                    const watched = isWatched(coin.symbol);
                     return (
                       <tr
                         key={coin.symbol}
@@ -283,18 +318,12 @@ export default function HomePage() {
                         </td>
                         <td className="px-6 py-3 text-right">
                           <span className="font-semibold text-foreground text-sm">
-                            $
-                            {coin.price.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 6,
-                            })}
+                            {formatPrice(coin.price)}
                           </span>
                         </td>
                         <td className="px-6 py-3 text-right">
                           <span
-                            className={`text-sm font-medium flex items-center justify-end gap-1 ${
-                              isPos ? "text-success" : "text-destructive"
-                            }`}
+                            className={`text-sm font-medium flex items-center justify-end gap-1 ${isPos ? "text-success" : "text-destructive"}`}
                           >
                             {isPos ? (
                               <TrendingUp className="w-3 h-3" />
@@ -319,6 +348,23 @@ export default function HomePage() {
                               title={`${sym} chart`}
                             />
                           </div>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => toggleWatch(coin.symbol)}
+                            className="p-1 rounded hover:bg-secondary transition-colors"
+                            aria-label={watched ? "Unwatch" : "Watch"}
+                            data-ocid={`market.toggle.${i + 1}`}
+                          >
+                            <Star
+                              className={`w-4 h-4 transition-colors ${
+                                watched
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-muted-foreground"
+                              }`}
+                            />
+                          </button>
                         </td>
                       </tr>
                     );

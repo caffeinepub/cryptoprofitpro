@@ -1,20 +1,42 @@
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { Currency } from "@/contexts/CurrencyContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart2, Menu, TrendingUp, X } from "lucide-react";
+import { ChevronDown, Menu, Moon, Sun, TrendingUp, X } from "lucide-react";
 import { useState } from "react";
 
 const navLinks = [
   { label: "Dashboard", path: "/" },
   { label: "Calculator", path: "/calculator" },
+  { label: "Converter", path: "/converter" },
+  { label: "Portfolio", path: "/portfolio" },
   { label: "Live Prices", path: "/live" },
   { label: "News", path: "/news" },
   { label: "Support Us", path: "/support" },
 ];
 
+const CURRENCIES: Currency[] = ["USD", "EUR", "GBP", "JPY", "INR"];
+const SYMBOLS: Record<Currency, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  JPY: "¥",
+  INR: "₹",
+};
+
 export default function Navbar() {
   const router = useRouterState();
   const currentPath = router.location.pathname;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const { currency, setCurrency } = useCurrency();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-md">
@@ -28,14 +50,14 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => {
             const isActive = currentPath === link.path;
             return (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`relative px-4 py-2 text-sm font-medium transition-colors ${
+                className={`relative px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -51,7 +73,47 @@ export default function Navbar() {
           })}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2">
+          {/* Currency Switcher */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground border border-border hover:border-primary/40 transition-colors"
+                data-ocid="nav.toggle"
+              >
+                {SYMBOLS[currency]} {currency}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-28">
+              {CURRENCIES.map((c) => (
+                <DropdownMenuItem
+                  key={c}
+                  onClick={() => setCurrency(c)}
+                  className={c === currency ? "text-primary" : ""}
+                >
+                  {SYMBOLS[c]} {c}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Theme Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-8 h-8 rounded-full border border-border flex items-center justify-center cursor-pointer hover:border-primary transition-colors"
+            aria-label="Toggle theme"
+            data-ocid="nav.toggle"
+          >
+            {theme === "dark" ? (
+              <Sun className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <Moon className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+
           <Link to="/calculator">
             <Button
               size="sm"
@@ -61,9 +123,6 @@ export default function Navbar() {
               Get Started
             </Button>
           </Link>
-          <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
-            <BarChart2 className="w-4 h-4 text-muted-foreground" />
-          </div>
         </div>
 
         <button
@@ -100,6 +159,24 @@ export default function Navbar() {
               </Link>
             );
           })}
+          <div className="flex items-center gap-2 px-3 pt-2 border-t border-border mt-1">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center gap-2 text-sm text-muted-foreground"
+              data-ocid="nav.toggle"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </button>
+            <span className="ml-auto text-sm font-semibold text-muted-foreground">
+              {SYMBOLS[currency]} {currency}
+            </span>
+          </div>
         </div>
       )}
     </header>

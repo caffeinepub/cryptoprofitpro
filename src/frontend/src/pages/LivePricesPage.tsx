@@ -3,9 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { useWatchlist } from "@/contexts/WatchlistContext";
 import type { CryptoPriceExtended } from "@/hooks/useQueries";
 import { useGetCryptoPrices } from "@/hooks/useQueries";
-import { RefreshCw, Search, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  RefreshCw,
+  Search,
+  Star,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 
@@ -52,12 +60,17 @@ export default function LivePricesPage() {
     refetch,
     isFetching,
   } = useGetCryptoPrices();
+  const { formatPrice } = useCurrency();
+  const { watchlist, toggleWatch, isWatched } = useWatchlist();
 
   const filtered = prices?.filter(
     (p) =>
       p.symbol.toLowerCase().includes(search.toLowerCase()) ||
       (p.name || "").toLowerCase().includes(search.toLowerCase()),
   );
+
+  const watchedCoins =
+    prices?.filter((p) => watchlist.includes(p.symbol)) ?? [];
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -90,6 +103,59 @@ export default function LivePricesPage() {
           </Button>
         </div>
 
+        {/* Watchlist section */}
+        <div className="mb-6">
+          {watchedCoins.length === 0 ? (
+            <div
+              className="bg-card/50 border border-border/50 rounded-xl px-5 py-3 text-sm text-muted-foreground flex items-center gap-2"
+              data-ocid="watchlist.empty_state"
+            >
+              <Star className="w-4 h-4" />
+              Star coins to add to your watchlist
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-xl px-4 py-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Watchlist
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {watchedCoins.map((coin) => {
+                  const sym = coin.symbol.replace("USDT", "");
+                  const isPos = coin.changePercent >= 0;
+                  return (
+                    <div
+                      key={coin.symbol}
+                      className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-1.5 text-sm"
+                      data-ocid="watchlist.card"
+                    >
+                      <CoinIcon coin={coin} />
+                      <span className="font-semibold text-foreground">
+                        {sym}
+                      </span>
+                      <span className="font-mono text-foreground">
+                        {formatPrice(coin.price)}
+                      </span>
+                      <span
+                        className={`text-xs ${isPos ? "text-success" : "text-destructive"}`}
+                      >
+                        {isPos ? "+" : ""}
+                        {coin.changePercent.toFixed(2)}%
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleWatch(coin.symbol)}
+                        className="ml-1 text-yellow-400 hover:text-muted-foreground transition-colors"
+                      >
+                        <Star className="w-3 h-3 fill-yellow-400" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="relative mb-6 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -119,13 +185,14 @@ export default function LivePricesPage() {
                   <th className="text-right px-5 py-3 hidden lg:table-cell">
                     Chart
                   </th>
+                  <th className="text-center px-3 py-3">★</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading &&
                   skeletonKeys.map((k) => (
                     <tr key={k} className="border-b border-border/50">
-                      <td colSpan={6} className="px-5 py-3">
+                      <td colSpan={7} className="px-5 py-3">
                         <Skeleton className="h-10 w-full" />
                       </td>
                     </tr>
@@ -133,7 +200,7 @@ export default function LivePricesPage() {
 
                 {isError && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center">
+                    <td colSpan={7} className="px-5 py-8 text-center">
                       <p
                         className="text-destructive"
                         data-ocid="prices.error_state"
@@ -149,6 +216,7 @@ export default function LivePricesPage() {
                   filtered?.map((coin, i) => {
                     const sym = coin.symbol.replace("USDT", "");
                     const isPos = coin.changePercent >= 0;
+                    const watched = isWatched(coin.symbol);
                     return (
                       <tr
                         key={coin.symbol}
@@ -173,11 +241,7 @@ export default function LivePricesPage() {
                         </td>
                         <td className="px-5 py-3 text-right">
                           <span className="font-semibold text-foreground">
-                            $
-                            {coin.price.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 6,
-                            })}
+                            {formatPrice(coin.price)}
                           </span>
                         </td>
                         <td className="px-5 py-3 text-right">
@@ -213,6 +277,23 @@ export default function LivePricesPage() {
                             />
                           </div>
                         </td>
+                        <td className="px-3 py-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => toggleWatch(coin.symbol)}
+                            className="p-1 rounded hover:bg-secondary transition-colors"
+                            aria-label={watched ? "Unwatch" : "Watch"}
+                            data-ocid={`prices.toggle.${i + 1}`}
+                          >
+                            <Star
+                              className={`w-4 h-4 transition-colors ${
+                                watched
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-muted-foreground"
+                              }`}
+                            />
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -220,7 +301,7 @@ export default function LivePricesPage() {
                 {!isLoading && !isError && filtered?.length === 0 && (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-5 py-10 text-center"
                       data-ocid="prices.empty_state"
                     >

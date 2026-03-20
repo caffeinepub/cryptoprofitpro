@@ -56,12 +56,55 @@
     --sidebar-ring: 0.72 0.12 175;
   }
 
+  /* Light mode overrides */
+  .light {
+    color-scheme: light;
+    --background: 0.97 0.005 220;
+    --foreground: 0.15 0.015 220;
+    --card: 1 0 0;
+    --card-foreground: 0.15 0.015 220;
+    --popover: 1 0 0;
+    --popover-foreground: 0.15 0.015 220;
+    --primary: 0.55 0.14 175;
+    --primary-foreground: 0.98 0.005 220;
+    --secondary: 0.93 0.008 220;
+    --secondary-foreground: 0.15 0.015 220;
+    --muted: 0.93 0.008 220;
+    --muted-foreground: 0.48 0.02 220;
+    --accent: 0.55 0.14 175;
+    --accent-foreground: 0.98 0.005 220;
+    --destructive: 0.55 0.22 22;
+    --destructive-foreground: 0.98 0.005 220;
+    --border: 0.88 0.01 220;
+    --input: 0.88 0.01 220;
+    --ring: 0.55 0.14 175;
+    --success: 0.52 0.2 142;
+    --success-foreground: 0.98 0.005 220;
+    --chart-1: 0.55 0.14 175;
+    --chart-2: 0.52 0.2 142;
+    --chart-3: 0.55 0.22 22;
+    --chart-4: 0.62 0.18 55;
+    --chart-5: 0.55 0.15 260;
+    --sidebar: 1 0 0;
+    --sidebar-foreground: 0.15 0.015 220;
+    --sidebar-primary: 0.55 0.14 175;
+    --sidebar-primary-foreground: 0.98 0.005 220;
+    --sidebar-accent: 0.93 0.008 220;
+    --sidebar-accent-foreground: 0.15 0.015 220;
+    --sidebar-border: 0.88 0.01 220;
+    --sidebar-ring: 0.55 0.14 175;
+  }
+
   * {
     @apply border-border;
   }
 
   html {
     color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
   }
 
   body {
